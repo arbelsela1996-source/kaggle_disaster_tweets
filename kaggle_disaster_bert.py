@@ -8,6 +8,7 @@ simply upload the file and convert it to a notebook.
 from __future__ import annotations
 
 import random
+from pathlib import Path
 from typing import List
 
 import numpy as np
@@ -28,6 +29,22 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 import matplotlib.pyplot as plt
+
+
+def resolve_kaggle_train_csv() -> str:
+    """Return the first existing Kaggle train.csv path across common mount layouts."""
+    candidates = [
+        "/kaggle/input/competitions/nlp-getting-started/train.csv",
+        "/kaggle/input/nlp-getting-started/train.csv",
+        "/kaggle/input/natural-language-processing-with-disaster-tweets/train.csv",
+    ]
+    for path in candidates:
+        if Path(path).is_file():
+            return path
+    raise FileNotFoundError(
+        "Could not find train.csv in expected Kaggle input paths. "
+        "Check the dataset mount under /kaggle/input."
+    )
 
 
 def set_seed(seed: int = 42) -> None:
@@ -160,8 +177,10 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
 
-    # On Kaggle, train.csv is available in the input directory
-    df = pd.read_csv("/kaggle/input/nlp-getting-started/train.csv")
+    # On Kaggle, train.csv is available in the input directory.
+    train_csv_path = resolve_kaggle_train_csv()
+    print("Using train.csv from:", train_csv_path)
+    df = pd.read_csv(train_csv_path)
     df["text"] = df["text"].fillna("").astype(str).str.strip()
 
     train_df, val_df = train_test_split(
