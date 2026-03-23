@@ -207,7 +207,7 @@ def main():
     val_f1s = []
 
     for epoch in range(1, 3 + 1):
-        print(f\"\\nEpoch {epoch}/3\")
+        print(f"\nEpoch {epoch}/3")
         train_loss = train_one_epoch(model, train_loader, optimizer, device)
         scheduler.step()
         val_loss, metrics, y_true, y_pred = evaluate(model, val_loader, device)
@@ -215,26 +215,26 @@ def main():
         train_losses.append(train_loss)
         val_losses.append(val_loss)
         # Here we only have val metrics; for simplicity, reuse val F1 for train F1 curve
-        train_f1s.append(metrics[\"f1\"])
-        val_f1s.append(metrics[\"f1\"])
+        train_f1s.append(metrics["f1"])
+        val_f1s.append(metrics["f1"])
 
         print(
-            f\"Epoch {epoch}: Train loss={train_loss:.4f}, Val loss={val_loss:.4f}, "
-            f\"Val acc={metrics['accuracy']:.4f}, Val F1={metrics['f1']:.4f}\"
+            f"Epoch {epoch}: Train loss={train_loss:.4f}, Val loss={val_loss:.4f}, "
+            f"Val acc={metrics['accuracy']:.4f}, Val F1={metrics['f1']:.4f}"
         )
 
-        print(\"\\nValidation classification report:\\n\")
+        print("\nValidation classification report:\n")
         print(classification_report(y_true, y_pred, digits=4))
 
         cm = confusion_matrix(y_true, y_pred)
-        print(\"Confusion matrix:\\n\", cm)
+        print("Confusion matrix:\n", cm)
 
     plot_curves(train_losses, val_losses, train_f1s, val_f1s)
 
     # Inference examples
     example_texts = [
-        \"Just happened a terrible car crash\",
-        \"What a beautiful sunny day!\",
+        "Just happened a terrible car crash",
+        "What a beautiful sunny day!",
     ]
     model.eval()
     with torch.no_grad():
@@ -243,20 +243,20 @@ def main():
                 text,
                 add_special_tokens=True,
                 truncation=True,
-                padding=\"max_length\",
+                padding="max_length",
                 max_length=128,
                 return_attention_mask=True,
-                return_tensors=\"pt\",
+                return_tensors="pt",
             )
-            input_ids = enc[\"input_ids\"].to(device)
-            attention_mask = enc[\"attention_mask\"].to(device)
+            input_ids = enc["input_ids"].to(device)
+            attention_mask = enc["attention_mask"].to(device)
             outputs = model(input_ids=input_ids, attention_mask=attention_mask)
             probs = torch.softmax(outputs.logits, dim=-1)[0]
             pred = int(torch.argmax(probs).item())
-            print(f\"Text: {text}\") 
-            print(f\"  Predicted label: {pred} (prob disaster={probs[1].item():.3f})\\n\")
+            print(f"Text: {text}")
+            print(f"  Predicted label: {pred} (prob disaster={probs[1].item():.3f})\n")
 
 
-if __name__ == \"__main__\":
+if __name__ == "__main__":
     main()
 
