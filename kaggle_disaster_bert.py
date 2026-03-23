@@ -23,7 +23,6 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 from transformers import (
-    AdamW,
     AutoModelForSequenceClassification,
     AutoTokenizer,
     get_linear_schedule_with_warmup,
@@ -193,7 +192,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
-    optimizer = AdamW(model.parameters(), lr=2e-5)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
     total_steps = len(train_loader) * 3
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
