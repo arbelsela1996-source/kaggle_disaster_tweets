@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
+import numpy as np
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from torch.utils.data import DataLoader
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, PreTrainedTokenizerBase
+
+from .datasets import TweetDataset
 
 
 def load_model_and_tokenizer(model_dir: str):
@@ -52,4 +56,32 @@ def predict_texts(
             all_probs.append(prob_positive)
 
     return all_preds, all_probs
+
+
+def predict_disaster_positive_probs(
+    texts: List[str],
+    model: torch.nn.Module,
+    tokenizer: PreTrainedTokenizerBase,
+    max_length: int,
+    batch_size: int,
+    device: torch.device,
+) -> np.ndarray:
+    """Return shape (N,) probabilities P(class=1) for each text."""
+    dataset = TweetDataset(
+        texts=texts,
+        labels=None,
+        tokenizer=tokenizer,
+        max_length=max_length,
+    )
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    model.eval()
+    out: List[float] = []
+    with torch.no_grad():
+        for batch in loader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+            probs = torch.softmax(outputs.logits, dim=-1)[:, 1]
+            out.extend(probs.cpu().numpy().tolist())
+    return np.array(out, dtype=np.float32)
 
